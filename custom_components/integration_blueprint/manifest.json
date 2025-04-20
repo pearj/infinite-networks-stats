@@ -1,12 +1,12 @@
 {
   "domain": "integration_blueprint",
-  "name": "Integration blueprint",
+  "name": "Infinite Network Stats",
   "codeowners": [
-    "@ludeeus"
+    "@pearj"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/ludeeus/integration_blueprint",
+  "documentation": "https://github.com/pearj/infinite-networks-stats",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/ludeeus/integration_blueprint/issues",
+  "issue_tracker": "https://github.com/pearj/infinite-networks-stats/issues",
   "version": "0.1.0"
 }
