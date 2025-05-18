@@ -5,13 +5,15 @@
                 "description": "If you need help with the configuration have a look here: https://github.com/pearj/infinite-networks-stats",
                 "data": {
                     "username": "Username",
-                    "password": "Password"
+                    "password": "Password",
+                    "mfa_shared_secret": "MFA Shared Secret"
                 }
             }
         },
         "error": {
             "auth": "Username/Password is wrong.",
             "connection": "Unable to connect to the server.",
+            "mfa": "MFA Shared Secret is wrong.",
             "unknown": "Unknown error occurred."
         },
         "abort": {

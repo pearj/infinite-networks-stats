@@ -14,8 +14,9 @@ from .api import (
     InfinteNetworksApiClientAuthenticationError,
     InfinteNetworksApiClientCommunicationError,
     InfinteNetworksApiClientError,
+    InfinteNetworksApiClientMfaError,
 )
-from .const import DOMAIN, LOGGER
+from .const import CONF_MFA_SHARED_SECRET, DOMAIN, LOGGER
 
 
 class InfinteNetworksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -34,10 +35,14 @@ class InfinteNetworksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 await self._test_credentials(
                     username=user_input[CONF_USERNAME],
                     password=user_input[CONF_PASSWORD],
+                    mfa_shared_secret=user_input[CONF_MFA_SHARED_SECRET],
                 )
             except InfinteNetworksApiClientAuthenticationError as exception:
                 LOGGER.warning(exception)
                 _errors["base"] = "auth"
+            except InfinteNetworksApiClientMfaError as exception:
+                LOGGER.error(exception)
+                _errors["base"] = "mfa"
             except InfinteNetworksApiClientCommunicationError as exception:
                 LOGGER.error(exception)
                 _errors["base"] = "connection"
@@ -74,16 +79,24 @@ class InfinteNetworksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                             type=selector.TextSelectorType.PASSWORD,
                         ),
                     ),
+                    vol.Required(CONF_MFA_SHARED_SECRET): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD,
+                        ),
+                    ),
                 },
             ),
             errors=_errors,
         )
 
-    async def _test_credentials(self, username: str, password: str) -> None:
+    async def _test_credentials(
+        self, username: str, password: str, mfa_shared_secret: str
+    ) -> None:
         """Validate credentials."""
         client = InfinteNetworksApiClient(
             username=username,
             password=password,
+            mfa_shared_secret=mfa_shared_secret,
             session=async_create_clientsession(self.hass),
         )
         await client.async_get_data()

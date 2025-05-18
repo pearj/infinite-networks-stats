@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import socket
 from datetime import datetime
+import token
 from typing import Any, Tuple, TypedDict
 from urllib.parse import parse_qs
 
 import aiohttp
 import async_timeout
+import pyotp
+from selectolax.parser import HTMLParser
 
 from custom_components.integration_blueprint.const import LOGGER
 
@@ -36,6 +39,12 @@ class InfinteNetworksApiClientAuthenticationError(
     """Exception to indicate an authentication error."""
 
 
+class InfinteNetworksApiClientMfaError(
+    InfinteNetworksApiClientError,
+):
+    """Exception to indicate the MFA shared secret is wrong."""
+
+
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     if response.status in (401, 403):
@@ -48,7 +57,7 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
 
 def _verify_sso_auth_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
-    if response.url.path != "/":
+    if response.url.path not in {"/", "/authenticate"}:
         msg = "Invalid credentials"
         raise InfinteNetworksApiClientAuthenticationError(
             msg,
@@ -87,11 +96,13 @@ class InfinteNetworksApiClient:
         self,
         username: str,
         password: str,
+        mfa_shared_secret: str,
         session: aiohttp.ClientSession,
     ) -> None:
         """Sample API Client."""
         self._username = username
         self._password = password
+        self._mfa_shared_secret = mfa_shared_secret
         self._session = session
         self._hmac: InfinteHmac | None = None
         self._client_id: int | None = None
@@ -146,7 +157,48 @@ class InfinteNetworksApiClient:
                 url="https://sso.infinite.net.au/login",
                 data=data,
             )
+
             _verify_sso_auth_response_or_raise(response)
+
+            if response.url.path == "/authenticate":
+                # Time to do MFA
+                mfa = pyotp.TOTP(self._mfa_shared_secret)
+                mfa_code = mfa.now()
+
+                # Grab the two factor token from the response
+                html_text = await response.text()
+                tree = HTMLParser(html=html_text)
+                token_elem = tree.css_first("input#two_factor_register__token")
+                if token_elem:
+                    token = token_elem.attributes["value"]
+                else:
+                    msg = "Unable to find two factor token in MFA form"
+                    raise InfinteNetworksApiClientMfaError(
+                        msg,
+                    )
+
+                data = aiohttp.FormData()
+                data.add_field("two_factor_register[code]", mfa_code)
+                data.add_field("two_factor_register[_token]", token)
+                # Hopefully can remove this in the future, as this is not a
+                # good implementation on their side
+                data.add_field("two_factor_register[secret]", self._mfa_shared_secret)
+
+                response = await self._session.post(
+                    url="https://sso.infinite.net.au/authenticate",
+                    data=data,
+                )
+
+                if response.url.path != "/":
+                    # We are not authenticated
+                    msg = "Unable to authenticate with MFA"
+                    raise InfinteNetworksApiClientMfaError(
+                        msg,
+                    )
+
+                response.raise_for_status()
+
+                # MFA is done, we should be authenticated now
 
             response = await self._session.get(
                 url="https://sso.infinite.net.au/leave/1"

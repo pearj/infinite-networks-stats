@@ -15,7 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
 
 from .api import InfinteNetworksApiClient
-from .const import DOMAIN, LOGGER
+from .const import CONF_MFA_SHARED_SECRET, DOMAIN, LOGGER
 from .coordinator import InfinteNetworksDataUpdateCoordinator
 from .data import InfinteNetworksData
 
@@ -47,6 +47,7 @@ async def async_setup_entry(
         client=InfinteNetworksApiClient(
             username=entry.data[CONF_USERNAME],
             password=entry.data[CONF_PASSWORD],
+            mfa_shared_secret=entry.data[CONF_MFA_SHARED_SECRET],
             session=async_get_clientsession(hass),
         ),
         integration=async_get_loaded_integration(hass, entry.domain),
