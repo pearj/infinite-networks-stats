@@ -99,4 +99,4 @@ class InfinteNetworksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             mfa_shared_secret=mfa_shared_secret,
             session=async_create_clientsession(self.hass),
         )
-        await client.async_get_data()
+        await client.async_get_service()

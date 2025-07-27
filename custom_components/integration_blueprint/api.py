@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import socket
 from datetime import datetime
-import token
-from typing import Any, Tuple, TypedDict
+from typing import Any, TypedDict
 from urllib.parse import parse_qs
 
 import aiohttp
 import async_timeout
 import pyotp
+from attr import dataclass
 from selectolax.parser import HTMLParser
 
 from custom_components.integration_blueprint.const import LOGGER
@@ -21,6 +21,12 @@ class InfinteHmac(TypedDict):
     user: str
     hmac: str
     expires_date: datetime
+
+
+@dataclass
+class InfiniteService:
+    identifier: str
+    id: int
 
 
 class InfinteNetworksApiClientError(Exception):
@@ -109,6 +115,7 @@ class InfinteNetworksApiClient:
 
     @property
     def hmac(self) -> InfinteHmac:
+        """Return the hmac."""
         if self._hmac:
             return self._hmac
         msg = "hmac missing"
@@ -118,6 +125,7 @@ class InfinteNetworksApiClient:
 
     @property
     def client_id(self) -> int:
+        """Return the client ID."""
         if self._client_id:
             return self._client_id
         msg = "client id missing"
@@ -125,16 +133,32 @@ class InfinteNetworksApiClient:
             msg,
         )
 
-    async def async_get_data(self) -> Any:
-        """Get data from the API."""
+    async def async_get_service(self) -> InfiniteService:
+        """Get the first service from the API."""
         if not self._client_id:
             await self._refresh_hmac_and_client()
-        json = await self._api_wrapper(
-            method="get",
-            url=f"https://invocation.infinite.net.au/api/incontrol/client/{self.client_id}/services",
-        )
 
-        return json["services"][0]["identifier"]
+        async with async_timeout.timeout(10):
+            json = await self._api_wrapper(
+                method="get",
+                url=f"https://invocation.infinite.net.au/api/incontrol/client/{self.client_id}/services",
+            )
+
+            return InfiniteService(
+                identifier=json["services"][0]["identifier"],
+                id=json["services"][0]["id"],
+            )
+
+    async def async_get_vision_details(self, infinite_service: InfiniteService) -> Any:
+        """Get Vision details from the API, including things like sync speed, etc."""
+        if not self._client_id:
+            await self._refresh_hmac_and_client()
+
+        async with async_timeout.timeout(30):
+            return await self._api_wrapper(
+                method="get",
+                url=f"https://invocation.infinite.net.au/api/vision/service/{infinite_service.id}/details",
+            )
 
     async def async_set_title(self, value: str) -> Any:
         """Get data from the API."""
@@ -168,7 +192,7 @@ class InfinteNetworksApiClient:
                 # Grab the two factor token from the response
                 html_text = await response.text()
                 tree = HTMLParser(html=html_text)
-                token_elem = tree.css_first("input#two_factor_register__token")
+                token_elem = tree.css_first("input#two_factor_login__token")
                 if token_elem:
                     token = token_elem.attributes["value"]
                 else:
@@ -178,11 +202,8 @@ class InfinteNetworksApiClient:
                     )
 
                 data = aiohttp.FormData()
-                data.add_field("two_factor_register[code]", mfa_code)
-                data.add_field("two_factor_register[_token]", token)
-                # Hopefully can remove this in the future, as this is not a
-                # good implementation on their side
-                data.add_field("two_factor_register[secret]", self._mfa_shared_secret)
+                data.add_field("two_factor_login[code]", mfa_code)
+                data.add_field("two_factor_login[_token]", token)
 
                 response = await self._session.post(
                     url="https://sso.infinite.net.au/authenticate",
@@ -236,15 +257,15 @@ class InfinteNetworksApiClient:
             hmac = self.hmac
             headers["Authorization"] = f"HMAC {hmac['user']}:{hmac['hmac']}"
             headers["X-Hmac-Expires"] = hmac["expires"]
-            async with async_timeout.timeout(10):
-                response = await self._session.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    json=data,
-                )
-                _verify_response_or_raise(response)
-                return await response.json()
+
+            response = await self._session.request(
+                method=method,
+                url=url,
+                headers=headers,
+                json=data,
+            )
+            _verify_response_or_raise(response)
+            return await response.json()
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
