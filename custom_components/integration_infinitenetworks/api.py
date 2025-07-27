@@ -13,7 +13,7 @@ import pyotp
 from attr import dataclass
 from selectolax.parser import HTMLParser
 
-from custom_components.integration_blueprint.const import LOGGER
+from custom_components.integration_infinitenetworks.const import LOGGER
 
 
 class InfinteHmac(TypedDict):
