@@ -1,4 +1,4 @@
-"""Binary sensor platform for integration_blueprint."""
+"""Binary sensor platform for integration_infinitenetworks."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 ENTITY_DESCRIPTIONS = (
     BinarySensorEntityDescription(
-        key="integration_blueprint",
+        key="integration_infinitenetworks",
         name="Infinite Network Stats Binary Sensor",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
@@ -44,7 +44,7 @@ async def async_setup_entry(
 
 
 class InfinteNetworksBinarySensor(InfinteNetworksEntity, BinarySensorEntity):
-    """integration_blueprint binary_sensor class."""
+    """integration_infinitenetworks binary_sensor class."""
 
     def __init__(
         self,
