@@ -17,6 +17,8 @@ from custom_components.integration_infinitenetworks.const import LOGGER
 
 
 class InfinteHmac(TypedDict):
+    """Represents an Infinite Networks HMAC."""
+
     expires: str
     user: str
     hmac: str
@@ -25,6 +27,8 @@ class InfinteHmac(TypedDict):
 
 @dataclass
 class InfiniteService:
+    """Represents an Infinite Networks Service."""
+
     identifier: str
     id: int
 
@@ -155,9 +159,11 @@ class InfinteNetworksApiClient:
             await self._refresh_hmac_and_client()
 
         async with async_timeout.timeout(30):
+            detail_url = f"https://invocation.infinite.net.au/api/vision/service/{infinite_service.id}/details"
+            LOGGER.debug("Fetching Vision connection details from %s", detail_url)
             return await self._api_wrapper(
                 method="get",
-                url=f"https://invocation.infinite.net.au/api/vision/service/{infinite_service.id}/details",
+                url=detail_url,
             )
 
     async def async_set_title(self, value: str) -> Any:
