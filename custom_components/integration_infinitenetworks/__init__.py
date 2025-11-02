@@ -26,8 +26,6 @@ if TYPE_CHECKING:
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
-    Platform.BINARY_SENSOR,
-    Platform.SWITCH,
 ]
 
 
@@ -42,6 +40,7 @@ async def async_setup_entry(
         logger=LOGGER,
         name=DOMAIN,
         update_interval=timedelta(hours=1),
+        always_update=False,
     )
     entry.runtime_data = InfinteNetworksData(
         client=InfinteNetworksApiClient(
