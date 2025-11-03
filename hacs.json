@@ -1,5 +1,8 @@
 {
     "name": "Infinite Network Stats",
+    "content_in_root": false,
+    "zip_release": true,
     "homeassistant": "2025.2.4",
-    "hacs": "2.0.1"
+    "hacs": "2.0.1",
+    "filename": "integration_infinitenetworks.zip"
 }
