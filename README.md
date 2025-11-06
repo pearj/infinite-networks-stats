@@ -158,10 +158,10 @@ After successful configuration, the integration will create several sensors in H
 
 ### Available Sensors
 
-- `sensor.actual_line_Rate_down` - Maximum DSL sync speed - down channel 
-- `sensor.actual_line_Rate_up` - Maximum DSL sync speed - up channel 
-- `sensor.attainable_line_Rate_down` - Actual DSL sync speed - down channel 
-- `sensor.attainable_line_Rate_up` - Actual DSL sync speed - up channel 
+- `sensor.actual_line_rate_down` - Maximum DSL sync speed - down channel 
+- `sensor.actual_line_rate_up` - Maximum DSL sync speed - up channel 
+- `sensor.attainable_line_rate_down` - Actual DSL sync speed - down channel 
+- `sensor.attainable_line_rate_up` - Actual DSL sync speed - up channel 
 - `sensor.ntu_cpe_firmware` - NTU firmware version
 - `sensor.ntu_cpe_make` - NTU manufacturer
 - `sensor.ntu_cpe_model` - NTU model
@@ -260,5 +260,6 @@ Developed by [@pearj](https://github.com/pearj)
 **Version**: 1.0.0  
 **Last Updated**: November 2025  
 **Home Assistant Minimum Version**: 2023.1.0
+
 
 
