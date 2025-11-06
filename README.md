@@ -111,10 +111,10 @@ Infinite Network requires Multi-Factor Authentication (MFA) for account access. 
    - Sign in with your primary account credentials
 
 2. **Set Up the Secondary Account**
-   - Add a Authorised User (left hand side menu)
-   - Complete the Authorise New Individual process
-   - Ensure the account has permissions of at least Technical View
-   - Find the authorisation email and click the link to Complete Authorisation
+   - Add a **Authorised User** (left hand side menu)
+   - Complete the **Authorise New Individual** process
+   - Ensure the account has permissions of at least **Technical View**
+   - Find the authorisation email and click the link to **Complete Authorisation**
    - Complete the form including setting a strong, unique password
 
 3. **Enable MFA on Secondary Account**
@@ -128,9 +128,7 @@ Infinite Network requires Multi-Factor Authentication (MFA) for account access. 
    - Save it securely - you'll need this for Home Assistant
 
 5. **Complete MFA Setup**
-   - Now scan the QR code with your authenticator app
    - Enter the 6-digit verification code
-   - Save backup codes
 
 6. **Use Secondary Account in Home Assistant**
    - Configure Home Assistant with the secondary account credentials
@@ -262,4 +260,5 @@ Developed by [@pearj](https://github.com/pearj)
 **Version**: 1.0.0  
 **Last Updated**: November 2025  
 **Home Assistant Minimum Version**: 2023.1.0
+
 
