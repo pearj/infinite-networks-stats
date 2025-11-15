@@ -5,9 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.const import (
-    UnitOfInformation, UnitOfDataRate
-)
+from homeassistant.const import UnitOfDataRate
 
 from .entity import InfinteNetworksEntity
 
