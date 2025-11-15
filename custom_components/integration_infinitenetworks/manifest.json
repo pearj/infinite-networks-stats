@@ -10,7 +10,7 @@
   "issue_tracker": "https://github.com/pearj/infinite-networks-stats/issues",
   "requirements": [
     "pyotp>=2.9.0",
-    "selectolax>=0.4.0"
+    "selectolax>=0.4.1"
   ],
-  "version": "0.2.0"
+  "version": "0.3.0"
 }
