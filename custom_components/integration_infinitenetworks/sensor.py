@@ -116,7 +116,4 @@ class InfinteNetworksSensor(InfinteNetworksEntity, SensorEntity):
                 return round(float(value) / (1024 / 1000))
             except (ValueError, TypeError):
                 return value
-
         return value
-
-
