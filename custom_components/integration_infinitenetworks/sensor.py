@@ -103,6 +103,7 @@ class InfinteNetworksSensor(InfinteNetworksEntity, SensorEntity):
 
     @property
     def native_value(self) -> str | int | None:
+        """Return the native value of the sensor."""
         value = self.coordinator.data.get("details").get(self.entity_description.key)  # pyright: ignore[reportOptionalMemberAccess]
         if self.entity_description.key in (
             "actual_line_rate_up",
