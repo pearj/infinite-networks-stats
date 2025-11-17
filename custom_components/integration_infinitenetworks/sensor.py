@@ -102,6 +102,20 @@ class InfinteNetworksSensor(InfinteNetworksEntity, SensorEntity):
             self._attr_unique_id += f"_{entity_description.key}"
 
     @property
-    def native_value(self) -> str | None:
-        """Return the native value of the sensor."""
-        return self.coordinator.data.get("details").get(self.entity_description.key)  # pyright: ignore[reportOptionalMemberAccess]
+    def native_value(self) -> str | int | None:
+        value = self.coordinator.data.get("details").get(self.entity_description.key)  # pyright: ignore[reportOptionalMemberAccess]
+        if self.entity_description.key in (
+            "actual_line_rate_up",
+            "attainable_line_rate_up",
+            "actual_line_rate_down",
+            "attainable_line_rate_down",
+        ) and value is not None:
+            try:
+                # convert from base 1024 to base 1000
+                return round(float(value) / (1024 / 1000))
+            except (ValueError, TypeError):
+                return value
+
+        return value
+
+
