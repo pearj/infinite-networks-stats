@@ -52,22 +52,22 @@ ENTITY_DESCRIPTIONS = (
     SensorEntityDescription(
         key="actual_line_rate_up",  #: 95351,
         name="Actual line rate up",
-        native_unit_of_measurement=UnitOfDataRate.BITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
     ),
     SensorEntityDescription(
         key="attainable_line_rate_up",  #: 98071,
         name="Attainable line rate up",
-        native_unit_of_measurement=UnitOfDataRate.BITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
     ),
     SensorEntityDescription(
         key="actual_line_rate_down",  #: 764172,
         name="Actual line rate down",
-        native_unit_of_measurement=UnitOfDataRate.BITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
     ),
     SensorEntityDescription(
         key="attainable_line_rate_down",  #: 765685,
         name="Attainable line rate down",
-        native_unit_of_measurement=UnitOfDataRate.BITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
     ),
 )
 
@@ -102,6 +102,18 @@ class InfinteNetworksSensor(InfinteNetworksEntity, SensorEntity):
             self._attr_unique_id += f"_{entity_description.key}"
 
     @property
-    def native_value(self) -> str | None:
+    def native_value(self) -> str | int | None:
         """Return the native value of the sensor."""
-        return self.coordinator.data.get("details").get(self.entity_description.key)  # pyright: ignore[reportOptionalMemberAccess]
+        value = self.coordinator.data.get("details").get(self.entity_description.key)  # pyright: ignore[reportOptionalMemberAccess]
+        if self.entity_description.key in (
+            "actual_line_rate_up",
+            "attainable_line_rate_up",
+            "actual_line_rate_down",
+            "attainable_line_rate_down",
+        ) and value is not None:
+            try:
+                # convert from base 1024 to base 1000
+                return round(float(value) / (1024 / 1000))
+            except (ValueError, TypeError):
+                return value
+        return value

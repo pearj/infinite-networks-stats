@@ -22,12 +22,8 @@ This integration allows Home Assistant users to monitor their Infinite Network V
 
 ## Features
 
-- Real-time data usage monitoring
-- Remaining data allowance tracking
-- Billing cycle information
-- Plan details and account status
-- Historical usage data
-- Customizable sensors for automation
+- Real-time NTU details
+- Real-time DSL sync speeds
 
 ## Prerequisites
 
@@ -260,6 +256,7 @@ Developed by [@pearj](https://github.com/pearj)
 **Version**: 1.0.0  
 **Last Updated**: November 2025  
 **Home Assistant Minimum Version**: 2023.1.0
+
 
 
 
