@@ -46,16 +46,16 @@ Before installing this integration, ensure you have:
 2. Click on "Integrations"
 3. Click the three dots in the top right corner
 4. Select "Custom repositories"
-5. Add the repository URL: `https://github.com/pearj/infinite-network-stats`
+5. Add the repository URL: `https://github.com/pearj/infinite-networks-stats`
 6. Select category: "Integration"
 7. Click "Add"
 8. Search for "Infinite Network Stats" in HACS
-9. Click "Install"
+9. Click "Download"
 10. Restart Home Assistant
 
 ### Method 2: Manual Installation
 
-1. Download the latest release from the [GitHub repository](https://github.com/pearj/infinite-network-stats)
+1. Download the latest release from the [GitHub repository](https://github.com/pearj/infinite-networks-stats)
 2. Extract the contents
 3. Copy the `custom_components/infinite_network_stats` folder to your Home Assistant `custom_components` directory
    ```bash
