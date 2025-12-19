@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.const import UnitOfDataRate
 
 from .entity import InfinteNetworksEntity
@@ -53,25 +57,25 @@ ENTITY_DESCRIPTIONS = (
         key="actual_line_rate_up",  #: 95351,
         name="Actual line rate up",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="attainable_line_rate_up",  #: 98071,
         name="Attainable line rate up",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="actual_line_rate_down",  #: 764172,
         name="Actual line rate down",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="attainable_line_rate_down",  #: 765685,
         name="Attainable line rate down",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
-        state_class="measurement",
+        state_class=SensorStateClass.MEASUREMENT,
     ),
 )
 
