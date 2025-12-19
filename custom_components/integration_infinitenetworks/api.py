@@ -166,15 +166,6 @@ class InfinteNetworksApiClient:
                 url=detail_url,
             )
 
-    async def async_set_title(self, value: str) -> Any:
-        """Get data from the API."""
-        return await self._api_wrapper(
-            method="patch",
-            url="https://jsonplaceholder.typicode.com/posts/1",
-            data={"title": value},
-            headers={"Content-type": "application/json; charset=UTF-8"},
-        )
-
     async def _refresh_hmac_and_client(self) -> None:
         self._hmac, self._client_id = await self._fetch_hmac_and_client()
 

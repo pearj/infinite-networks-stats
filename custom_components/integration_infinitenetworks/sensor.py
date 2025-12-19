@@ -53,21 +53,25 @@ ENTITY_DESCRIPTIONS = (
         key="actual_line_rate_up",  #: 95351,
         name="Actual line rate up",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
+        state_class="measurement",
     ),
     SensorEntityDescription(
         key="attainable_line_rate_up",  #: 98071,
         name="Attainable line rate up",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
+        state_class="measurement",
     ),
     SensorEntityDescription(
         key="actual_line_rate_down",  #: 764172,
         name="Actual line rate down",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
+        state_class="measurement",
     ),
     SensorEntityDescription(
         key="attainable_line_rate_down",  #: 765685,
         name="Attainable line rate down",
         native_unit_of_measurement=UnitOfDataRate.KILOBITS_PER_SECOND,
+        state_class="measurement",
     ),
 )
 
