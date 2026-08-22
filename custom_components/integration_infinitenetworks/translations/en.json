@@ -5,15 +5,13 @@
                 "description": "Check the github readme for example configuration",
                 "data": {
                     "username": "Username",
-                    "password": "Password",
-                    "mfa_shared_secret": "MFA Shared Secret"
+                    "password": "Password"
                 }
             }
         },
         "error": {
             "auth": "Username/Password is wrong.",
             "connection": "Unable to connect to the server.",
-            "mfa": "MFA Shared Secret is wrong.",
             "unknown": "Unknown error occurred."
         },
         "abort": {

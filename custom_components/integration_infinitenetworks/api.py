@@ -5,13 +5,10 @@ from __future__ import annotations
 import socket
 from datetime import datetime
 from typing import Any, TypedDict
-from urllib.parse import parse_qs
 
 import aiohttp
 import async_timeout
-import pyotp
 from attr import dataclass
-from selectolax.parser import HTMLParser
 
 from custom_components.integration_infinitenetworks.const import LOGGER
 
@@ -49,15 +46,14 @@ class InfinteNetworksApiClientAuthenticationError(
     """Exception to indicate an authentication error."""
 
 
-class InfinteNetworksApiClientMfaError(
-    InfinteNetworksApiClientError,
-):
-    """Exception to indicate the MFA shared secret is wrong."""
+UNAUTHORIZED_STATUS = 401
+FORBIDDEN_STATUS = 403
+AUTH_ERROR_STATUS_CODES = (UNAUTHORIZED_STATUS, FORBIDDEN_STATUS)
 
 
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
-    if response.status in (401, 403):
+    if response.status in AUTH_ERROR_STATUS_CODES:
         msg = "Invalid credentials"
         raise InfinteNetworksApiClientAuthenticationError(
             msg,
@@ -67,7 +63,7 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
 
 def _verify_sso_auth_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
-    if response.url.path not in {"/", "/authenticate"}:
+    if response.status == UNAUTHORIZED_STATUS:
         msg = "Invalid credentials"
         raise InfinteNetworksApiClientAuthenticationError(
             msg,
@@ -75,11 +71,10 @@ def _verify_sso_auth_response_or_raise(response: aiohttp.ClientResponse) -> None
     response.raise_for_status()
 
 
-def _extract_access_token(response: aiohttp.ClientResponse) -> str:
-    if response.real_url.fragment:
-        querystring = parse_qs(response.real_url.fragment)
-        if "access_token" in querystring:
-            return querystring["access_token"][0]
+async def _extract_access_token(response: aiohttp.ClientResponse) -> str:
+    data = await response.json()  # Ensure the response is JSON
+    if "access_token" in data:
+        return data["access_token"]
 
     msg = f"Unable to extract access_token from {response.real_url}"
     raise InfinteNetworksApiClientAuthenticationError(
@@ -106,13 +101,11 @@ class InfinteNetworksApiClient:
         self,
         username: str,
         password: str,
-        mfa_shared_secret: str,
         session: aiohttp.ClientSession,
     ) -> None:
         """Sample API Client."""
         self._username = username
         self._password = password
-        self._mfa_shared_secret = mfa_shared_secret
         self._session = session
         self._hmac: InfinteHmac | None = None
         self._client_id: int | None = None
@@ -145,7 +138,7 @@ class InfinteNetworksApiClient:
         async with async_timeout.timeout(10):
             json = await self._api_wrapper(
                 method="get",
-                url=f"https://invocation.infinite.net.au/api/incontrol/client/{self.client_id}/services",
+                url=f"https://portal.infinite.net.au/iv/api/incontrol/client/{self.client_id}/services",
             )
 
             return InfiniteService(
@@ -159,7 +152,7 @@ class InfinteNetworksApiClient:
             await self._refresh_hmac_and_client()
 
         async with async_timeout.timeout(30):
-            detail_url = f"https://invocation.infinite.net.au/api/vision/service/{infinite_service.id}/details"
+            detail_url = f"https://portal.infinite.net.au/iv/api/vision/service/{infinite_service.id}/details"
             LOGGER.debug("Fetching Vision connection details from %s", detail_url)
             return await self._api_wrapper(
                 method="get",
@@ -171,61 +164,17 @@ class InfinteNetworksApiClient:
 
     async def _fetch_hmac_and_client(self) -> tuple[InfinteHmac, int]:
         async with async_timeout.timeout(10):
-            data = aiohttp.FormData()
-            data.add_field("_username", self._username)
-            data.add_field("_password", self._password)
             response = await self._session.post(
-                url="https://sso.infinite.net.au/login",
-                data=data,
+                url="https://portal.infinite.net.au/sso/api/login/1",
+                json={"username": self._username, "password": self._password},
             )
 
             _verify_sso_auth_response_or_raise(response)
 
-            if response.url.path == "/authenticate":
-                # Time to do MFA
-                mfa = pyotp.TOTP(self._mfa_shared_secret)
-                mfa_code = mfa.now()
-
-                # Grab the two factor token from the response
-                html_text = await response.text()
-                tree = HTMLParser(html=html_text)
-                token_elem = tree.css_first("input#two_factor_login__token")
-                if token_elem:
-                    token = token_elem.attributes["value"]
-                else:
-                    msg = "Unable to find two factor token in MFA form"
-                    raise InfinteNetworksApiClientMfaError(
-                        msg,
-                    )
-
-                data = aiohttp.FormData()
-                data.add_field("two_factor_login[code]", mfa_code)
-                data.add_field("two_factor_login[_token]", token)
-
-                response = await self._session.post(
-                    url="https://sso.infinite.net.au/authenticate",
-                    data=data,
-                )
-
-                if response.url.path != "/":
-                    # We are not authenticated
-                    msg = "Unable to authenticate with MFA"
-                    raise InfinteNetworksApiClientMfaError(
-                        msg,
-                    )
-
-                response.raise_for_status()
-
-                # MFA is done, we should be authenticated now
+            access_token = await _extract_access_token(response)
 
             response = await self._session.get(
-                url="https://sso.infinite.net.au/leave/1"
-            )
-
-            access_token = _extract_access_token(response)
-
-            response = await self._session.get(
-                url="https://sso.infinite.net.au/api/me",
+                url="https://portal.infinite.net.au/sso/api/me",
                 headers={"Authorization": f"Bearer {access_token}"},
             )
 
