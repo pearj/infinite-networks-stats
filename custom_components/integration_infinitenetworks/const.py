@@ -5,3 +5,4 @@ from logging import Logger, getLogger
 LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "integration_infinitenetworks"
+CONF_MFA_SHARED_SECRET = "mfa_shared_secret"  # noqa: S105

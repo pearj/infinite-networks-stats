@@ -8,6 +8,7 @@ from typing import Any, TypedDict
 
 import aiohttp
 import async_timeout
+import pyotp
 from attr import dataclass
 
 from custom_components.integration_infinitenetworks.const import LOGGER
@@ -46,6 +47,12 @@ class InfinteNetworksApiClientAuthenticationError(
     """Exception to indicate an authentication error."""
 
 
+class InfinteNetworksApiClientMfaError(
+    InfinteNetworksApiClientError,
+):
+    """Exception to indicate the MFA shared secret is wrong."""
+
+
 UNAUTHORIZED_STATUS = 401
 FORBIDDEN_STATUS = 403
 AUTH_ERROR_STATUS_CODES = (UNAUTHORIZED_STATUS, FORBIDDEN_STATUS)
@@ -61,10 +68,23 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     response.raise_for_status()
 
 
-def _verify_sso_auth_response_or_raise(response: aiohttp.ClientResponse) -> None:
+async def _verify_sso_auth_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     if response.status == UNAUTHORIZED_STATUS:
-        msg = "Invalid credentials"
+        error_response = await response.json()
+        error_status = None
+        if "status" in error_response:
+            error_status = error_response["status"]
+        if error_status in {"bad_2fa_code", "needs_2fa_code"}:
+            msg = f"Unable to authenticate with MFA, error status: {error_status}"
+            raise InfinteNetworksApiClientMfaError(
+                msg,
+            )
+        if error_status == "bad_credentials":
+            msg = f"Invalid username or password, error status: {error_status}"
+        else:
+            msg = f"Unknown authentication error: {error_status}"
+
         raise InfinteNetworksApiClientAuthenticationError(
             msg,
         )
@@ -101,11 +121,13 @@ class InfinteNetworksApiClient:
         self,
         username: str,
         password: str,
+        mfa_shared_secret: str,
         session: aiohttp.ClientSession,
     ) -> None:
         """Sample API Client."""
         self._username = username
         self._password = password
+        self._mfa_shared_secret = mfa_shared_secret
         self._session = session
         self._hmac: InfinteHmac | None = None
         self._client_id: int | None = None
@@ -164,12 +186,19 @@ class InfinteNetworksApiClient:
 
     async def _fetch_hmac_and_client(self) -> tuple[InfinteHmac, int]:
         async with async_timeout.timeout(10):
+            # Get MFA Code
+            mfa = pyotp.TOTP(self._mfa_shared_secret)
+            mfa_code = mfa.now()
             response = await self._session.post(
                 url="https://portal.infinite.net.au/sso/api/login/1",
-                json={"username": self._username, "password": self._password},
+                json={
+                    "username": self._username,
+                    "password": self._password,
+                    "code": mfa_code,
+                },
             )
 
-            _verify_sso_auth_response_or_raise(response)
+            await _verify_sso_auth_response_or_raise(response)
 
             access_token = await _extract_access_token(response)
 

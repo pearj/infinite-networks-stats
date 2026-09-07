@@ -14,12 +14,16 @@ A custom Home Assistant integration for monitoring Infinite Network internet usa
     - [Method 2: Manual Installation](#method-2-manual-installation)
   - [Configuration](#configuration)
     - [Configuration via YAML (Legacy)](#configuration-via-yaml-legacy)
-  - [Setting up a Secondary Account](#setting-up-a-secondary-account)
+  - [Acquiring the MFA Shared Secret](#acquiring-the-mfa-shared-secret)
+    - [Option 1: Using Your Primary Account](#option-1-using-your-primary-account)
+    - [Option 2: Creating a Secondary Account (Recommended)](#option-2-creating-a-secondary-account-recommended)
+    - [Understanding the MFA Shared Secret Format](#understanding-the-mfa-shared-secret-format)
     - [Security Best Practices](#security-best-practices)
   - [Usage](#usage)
     - [Available Sensors](#available-sensors)
   - [Troubleshooting](#troubleshooting)
     - [Authentication Failed](#authentication-failed)
+    - [MFA Token Invalid](#mfa-token-invalid)
     - [No Data Updates](#no-data-updates)
     - [Integration Not Found](#integration-not-found)
   - [Support](#support)
@@ -46,7 +50,7 @@ Before installing this integration, ensure you have:
 - **Home Assistant** version 2023.1 or later
 - An active **Infinite Network** account
 - Access to your Infinite Network account credentials
-- Created [secondary credentials](#setting-up-a-secondary-account) for this integration to use
+- **MFA Shared Secret** (see detailed instructions below)
 
 ## Installation
 
@@ -83,6 +87,7 @@ After installation, configure the integration through the Home Assistant UI:
 4. Enter your configuration details: (don't use your primary because this integration no longer supports MFA)
    - **Username**: Your Infinite Network secondary account username (email address)
    - **Password**: Your Infinite Network secondary account password
+   - **MFA Shared Secret**: The TOTP shared secret (see below for instructions)
 
 ### Configuration via YAML (Legacy)
 
@@ -93,12 +98,25 @@ sensor:
   - platform: infinite_network_stats
     username: your_email@example.com
     password: your_password
+    mfa_secret: YOUR_MFA_SHARED_SECRET
     scan_interval: 300  # Optional: Update interval in seconds (default: 300)
 ```
 
-## Setting up a Secondary Account
+## Acquiring the MFA Shared Secret
 
-You need to setup a secondary account with "Tech View" access, so that MFA is not required.
+**IMPORTANT:** The MFA Shared Secret is NOT the 6-digit code from your authenticator app. It is the secret key used to generate those codes.
+
+Infinite Network requires Multi-Factor Authentication (MFA) for account access. You have two options for obtaining the required MFA shared secret:
+
+### Option 1: Using Your Primary Account
+
+1. **Retrieve your MFA Secret from your Password vault or similar**
+
+2. **Use the Secret in Home Assistant**
+   - Use the captured MFA Shared Secret in your Home Assistant configuration
+   - Format: Usually 16 characters, may contain uppercase letters and numbers (e.g., `JBSWY3DPEHPK3PXP`)
+
+### Option 2: Creating a Secondary Account (Recommended)
 
 1. **Log in to Infinite Network**
    - Go to the [Infinite Network customer portal](https://portal.infinite.net.au)
@@ -111,14 +129,39 @@ You need to setup a secondary account with "Tech View" access, so that MFA is no
    - Find the authorisation email and click the link to **Complete Authorisation**
    - Complete the form including setting a strong, unique password
 
-3. **Use Secondary Account in Home Assistant**
+3. **Enable MFA on Secondary Account**
+   - Log in to the Infinite Network portal with the secondary account
+   - Click **Set up two factor authentication**
+   - Scan the QR code using a password vault app that enables you to retrieve the MFA Shared Secret (Laspass Authenticator or 1Password Authenticator)
+
+4. **Capture the MFA Shared Secret**
+   - Look for "Manual Entry Key" or "Secret Key" in your password vault
+   - Copy this secret (e.g., `JBSWY3DPEHPK3PXP`)
+   - Save it securely - you'll need this for Home Assistant
+
+5. **Complete MFA Setup**
+   - Enter the 6-digit verification code
+
+6. **Use Secondary Account in Home Assistant**
    - Configure Home Assistant with the secondary account credentials
    - This keeps your primary account's security unchanged
 
+### Understanding the MFA Shared Secret Format
+
+The MFA Shared Secret (also called TOTP secret key) is typically:
+- **Length**: 16-32 characters
+- **Format**: Base32 encoded (A-Z, 2-7)
+- **Example**: `JBSWY3DPEHPK3PXP` or `KRMVATZVJRGXI3LHMV2GS4Y=`
+- **Not**: The 6-digit code from your authenticator app
+- **Not**: Your password or username
+
 ### Security Best Practices
 
-1. **Monitor Access**: Regularly check your account activity logs
-2. **Use Secondary Account**: Prefer using a secondary account for integrations when possible
+1. **Store Securely**: Keep your MFA shared secret in a password manager
+2. **Never Share**: Don't share your MFA secret with anyone
+3. **Backup**: Save backup codes provided during MFA setup
+4. **Monitor Access**: Regularly check your account activity logs
+5. **Use Secondary Account**: Prefer using a secondary account for integrations when possible
 
 ## Usage
 
@@ -147,8 +190,19 @@ After successful configuration, the integration will create several sensors in H
 
 **Solutions**:
 1. Verify your username and password are correct
-2. Check that your Infinite Network account is active
-3. Try resetting your password on the Infinite Network portal
+2. Ensure you're using the MFA Shared Secret (not the 6-digit code)
+3. Check that your Infinite Network account is active
+4. Try resetting your password on the Infinite Network portal
+
+### MFA Token Invalid
+
+**Symptoms**: Error message about invalid MFA token or TOTP.
+
+**Solutions**:
+1. Verify you copied the complete MFA Shared Secret (no spaces or extra characters)
+2. Check the secret is in Base32 format (A-Z, 2-7)
+3. Ensure your Home Assistant server's clock is synchronized (NTP)
+4. Try reconfiguring MFA on your Infinite Network account
 
 ### No Data Updates
 
@@ -215,5 +269,5 @@ Developed by [@pearj](https://github.com/pearj)
 ---
 
 **Version**: 0.6.0
-**Last Updated**: August 2026
+**Last Updated**: September 2026
 **Home Assistant Minimum Version**: 2025.2.4
