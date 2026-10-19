@@ -1,5 +1,5 @@
 colorlog==6.12.0
 homeassistant==2025.10.4
 pip>=26.2.1
-ruff==0.17.0
+ruff==0.17.1
 pyotp==2.10.0
